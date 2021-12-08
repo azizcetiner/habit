@@ -1,6 +1,7 @@
 package com.acet.habit;
 
 import com.acet.habit.security.AppProperties;
+import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -25,6 +26,9 @@ public class HabitApplication {
 	public SpringApplicationContext springApplicationContext() {
 		return new SpringApplicationContext();
 	}
+
+	@Bean
+	public ModelMapper modelMapper() {return new ModelMapper();}
 
 	@Bean(name="AppProperties")
 	public AppProperties appProperties() {

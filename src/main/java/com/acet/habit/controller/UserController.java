@@ -1,6 +1,5 @@
 package com.acet.habit.controller;
 
-
 import com.acet.habit.model.request.UserDetailsRequestModel;
 import com.acet.habit.model.response.OperationStatusModel;
 import com.acet.habit.model.response.ResponseOperationName;
@@ -8,9 +7,12 @@ import com.acet.habit.model.response.ResponseOperationStatus;
 import com.acet.habit.model.response.UserRest;
 import com.acet.habit.service.UserService;
 import com.acet.habit.shared.dto.UserDto;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -23,13 +25,13 @@ public class UserController {
     @Autowired
     UserService userService;
 
+    @Autowired
+    ModelMapper modelMapper;
+
     @GetMapping(path = "/{id}")
     public UserRest getUser(@PathVariable String id) {
-
-        UserRest returnValue = new UserRest();
         UserDto foundUser = userService.getUserById(id);
-        BeanUtils.copyProperties(foundUser, returnValue);
-        return returnValue;
+        return modelMapper.map(foundUser, UserRest.class);
     }
 
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
@@ -40,9 +42,7 @@ public class UserController {
         List<UserDto> users = userService.getUsers(page, limit);
 
         for(UserDto userDto : users){
-            UserRest userModel = new UserRest();
-            BeanUtils.copyProperties(userDto, userModel);
-            returnValue.add(userModel);
+            returnValue.add(modelMapper.map(userDto, UserRest.class));
         }
 
         return returnValue;
@@ -51,28 +51,16 @@ public class UserController {
     @PostMapping(consumes = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE },
                  produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public UserRest createUser(@RequestBody UserDetailsRequestModel userDetails) {
-        UserRest returnValue = new UserRest();
-
-        UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(userDetails, userDto);
-
+        UserDto userDto = modelMapper.map(userDetails, UserDto.class);
         UserDto createdUser = userService.createUser(userDto);
-        BeanUtils.copyProperties(createdUser, returnValue);
-
-        return returnValue;
+        return modelMapper.map(createdUser, UserRest.class);
     }
 
     @PutMapping("/{userId}")
     public UserRest updateUser(@RequestBody UserDetailsRequestModel userDetails, @PathVariable String userId) {
-        UserRest returnValue = new UserRest();
-
-        UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(userDetails, userDto);
-
+        UserDto userDto = modelMapper.map(userDetails, UserDto.class);
         UserDto updatedUser = userService.updateUser(userDto, userId);
-        BeanUtils.copyProperties(updatedUser, returnValue);
-
-        return returnValue;
+        return modelMapper.map(updatedUser, UserRest.class);
     }
 
     @DeleteMapping(path = "/{id}",produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
