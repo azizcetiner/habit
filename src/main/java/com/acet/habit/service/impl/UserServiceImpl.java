@@ -7,6 +7,7 @@ import com.acet.habit.repository.UserRepository;
 import com.acet.habit.service.UserService;
 import com.acet.habit.shared.Utils;
 import com.acet.habit.shared.dto.UserDto;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -33,6 +34,9 @@ public class UserServiceImpl implements UserService {
     Utils utils;
 
     @Autowired
+    ModelMapper modelMapper;
+
+    @Autowired
     BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Override
@@ -40,37 +44,29 @@ public class UserServiceImpl implements UserService {
 
         if(userRepository.findByEmail(user.getEmail()) != null) throw new RuntimeException();
 
-        UserEntity userEntity = new UserEntity();
-        BeanUtils.copyProperties(user, userEntity);
+        UserEntity userEntity = modelMapper.map(user, UserEntity.class);
 
         userEntity.setUserId(utils.generateId(30));
         userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         UserEntity storedUserDetails = userRepository.save(userEntity);
 
-        UserDto returnValue = new UserDto();
-        BeanUtils.copyProperties(storedUserDetails, returnValue);
-
-        return returnValue;
+        return modelMapper.map(storedUserDetails, UserDto.class);
     }
 
     @Override
     public UserDto updateUser(UserDto user, String userId ) {
 
-        UserDto returnValue = new UserDto();
+
         UserEntity userEntity = userRepository.findUserByUserId(userId);
 
-        // user not found exception
         if (userEntity == null) throw new UserServiceException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
-
         if(user.getEmail() != null) userEntity.setEmail(user.getEmail());
         if(user.getUsername() != null) userEntity.setUsername(user.getUsername());
         if(user.getTasks() != null) userEntity.setTasks(user.getTasks());
 
         UserEntity updatedUserDetails = userRepository.save(userEntity);
-        BeanUtils.copyProperties(updatedUserDetails, returnValue);
 
-        return returnValue;
-
+        return modelMapper.map(updatedUserDetails, UserDto.class);
     }
 
     @Override
@@ -82,28 +78,20 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(String userId) {
-        UserDto returnValue = new UserDto();
+
         UserEntity foundUser = userRepository.findUserByUserId(userId);
         // exception
         if (foundUser == null) throw new UserServiceException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
-        BeanUtils.copyProperties(foundUser, returnValue);
 
-        return returnValue;
+        return modelMapper.map(foundUser, UserDto.class);
     }
 
     @Override
     public UserDto getUser(String email) {
         UserEntity userEntity = userRepository.findByEmail(email);
+        if (userEntity == null) throw new UsernameNotFoundException(email);
 
-
-
-        if (userEntity == null)
-            throw new UsernameNotFoundException(email);
-
-        UserDto returnValue = new UserDto();
-        BeanUtils.copyProperties(userEntity, returnValue);
-
-        return returnValue;
+        return modelMapper.map(userEntity, UserDto.class);
     }
 
     @Override
@@ -117,11 +105,8 @@ public class UserServiceImpl implements UserService {
         List<UserEntity> users = usersPage.getContent();
 
         for(UserEntity userEntity : users ) {
-            UserDto userDto = new UserDto();
-            BeanUtils.copyProperties(userEntity, userDto);
-            returnValue.add(userDto);
+            returnValue.add(modelMapper.map(userEntity, UserDto.class));
         }
-
         return returnValue;
     }
 
